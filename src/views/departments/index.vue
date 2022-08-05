@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div v-loading="isLoading" class="dashboard-container">
     <div class="app-container">
       <!--  上方卡面试图-->
       <el-card class="box-card-title">
@@ -21,7 +21,12 @@
       </el-tree>
     </div>
     <!--    新增弹框-->
-    <AddDept :current-node="currentNode" :is-show-add-dept.sync="isShowAddDept" @getDepartments="getDepartments" />
+    <AddDept
+      ref="addDept"
+      :current-node="currentNode"
+      :is-show-add-dept.sync="isShowAddDept"
+      @getDepartments="getDepartments"
+    />
   </div>
 </template>
 
@@ -35,6 +40,7 @@ export default {
   components: { TreeTool, AddDept },
   data() {
     return {
+      isLoading: false, // 加载进度条
       currentNode: {},
       isShowAddDept: false, // 添加部门弹层字段
       defaultProps: {
@@ -58,15 +64,23 @@ export default {
     // 点击编辑
     changeIsShowEditDept(node) {
       this.isShowAddDept = true
-      console.log(node)
+      this.currentNode = node
+      this.$refs.addDept.getDepartDetail(node.id)
     },
     // 获取列表
     async getDepartments() {
-      const res = await getDepartments()
-      this.company.name = res.companyName
-      this.company.manager = res.compantManagge || '管理员'
-      this.company.id = ''
-      this.departs = tranListToTreeDataNew(res.depts)
+      try {
+        this.isLoading = true
+        const res = await getDepartments()
+        this.company.name = res.companyName
+        this.company.manager = res.compantManagge || '管理员'
+        this.company.id = ''
+        this.departs = tranListToTreeDataNew(res.depts)
+        this.isLoading = false
+      } catch (e) {
+        console.log(e)
+        this.isLoading = false
+      }
     }
   }
 }

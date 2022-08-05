@@ -1,6 +1,6 @@
 <template>
   <!-- 新增部门的弹层 -->
-  <el-dialog :visible="isShowAddDept" title="新增部门" @close="close">
+  <el-dialog :visible="isShowAddDept" :title="showTitle" @close="close">
     <el-form ref="deptForm" :rules="rules" :model="formData" label-width="120px">
       <el-form-item label="部门名称" prop="name">
         <el-input v-model.trim="formData.name" style="width:80%" />
@@ -28,7 +28,7 @@
 </template>
 <script>
 
-import { addDepartments, getDepartments } from '@/api/departments'
+import { addDepartments, getDepartDetail, getDepartments, updateDepartments } from '@/api/departments'
 import { getEmployeeSimple } from '@/api/employees'
 
 export default {
@@ -48,7 +48,17 @@ export default {
       // 1、 接口获取所有的部门
       const { depts } = await getDepartments()
       // 2、找到当前点击的部门的所有子部门
-      const currentNodeChilren = depts.filter(item => item.pid === this.currentNode.id)
+      let currentNodeChilren
+      if (this.formData.id) {
+        //  编辑
+        currentNodeChilren = depts.filter(item => {
+          return item.pid === this.currentNode.pid && item.id !== this.currentNode.id
+        })
+      } else {
+        //  添加
+        currentNodeChilren = depts.filter(item => item.pid === this.currentNode.id)
+      }
+
       // 3、判断当前部门的所有子部门名称是否包含用户输入的部门名称
       const isRepeat = currentNodeChilren.some(item => item.name === value)
       // 4、如果包含说明名称重复
@@ -59,9 +69,15 @@ export default {
     const checkCode = async(rules, value) => {
       // 1、 接口获取所有的部门
       const { depts } = await getDepartments()
-
       //  2、直接判断当前用户添写的code是否包含在已存在的数据里面
-      const isRepeat = depts.some(item => (item.code === value))
+
+      let isRepeat
+      if (this.formData.id) {
+        //  编辑
+        isRepeat = depts.some(item => (item.code === value && item.id !== this.currentNode.id))
+      } else {
+        isRepeat = depts.some(item => (item.code === value))
+      }
       if (isRepeat) {
         return Promise.reject('部门code重复')
       }
@@ -89,6 +105,11 @@ export default {
       }
     }
   },
+  computed: {
+    showTitle() {
+      return this.formData.id ? '编辑部门' : '添加部门'
+    }
+  },
   methods: {
     async getEmployeeSimple() {
       this.peoples = await getEmployeeSimple()
@@ -97,8 +118,14 @@ export default {
     async btnOK() {
       try {
         await this.$refs.deptForm.validate()
-        await addDepartments({ ...this.formData, pid: this.currentNode.id })
-        this.$message.success('添加部门成功')
+        if (this.formData.id) {
+          //  编辑
+          await updateDepartments(this.formData)
+        } else {
+          //  添加
+          await addDepartments({ ...this.formData, pid: this.currentNode.id })
+        }
+        this.$message.success(`${this.showTitle}成功`)
         // 重新拉去数据
         this.$emit('getDepartments')
         this.close()
@@ -109,7 +136,18 @@ export default {
     close() {
       //  重置表单
       this.$refs.deptForm.resetFields()
+      // 强中重置表单
+      this.formData = {
+        name: '', // 部门名称
+        code: '', // 部门编码
+        manager: '', // 部门管理者
+        introduce: '' // 部门介绍
+      }
       this.$emit('update:isShowAddDept', false)
+    },
+    // 获取部门详情  add-dept.vue组件内部
+    async getDepartDetail(id) {
+      this.formData = await getDepartDetail(id)
     }
 
   }

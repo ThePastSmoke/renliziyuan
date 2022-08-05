@@ -123,19 +123,19 @@ export function param2Obj(url) {
 *  遍历树形 有一个重点 要先找一个头儿
 * */
 
-// export function tranListToTreeData(list, rootValue) {
-//   const arr = []
-//   list.forEach(item => {
-//     if (item.pid === rootValue) {
-//       const children = tranListToTreeData(list, item.id)
-//       if (children.length) {
-//         item.children = children
-//       }
-//       arr.push(item)
-//     }
-//   })
-//   return arr
-// }
+export function tranListToTreeData(list, rootValue) {
+  const arr = []
+  list.forEach(item => {
+    if (item.pid === rootValue) {
+      const children = tranListToTreeData(list, item.id)
+      if (children.length) {
+        item.children = children
+      }
+      arr.push(item)
+    }
+  })
+  return arr
+}
 
 export function tranListToTreeDataNew(list) {
   const treeList = []

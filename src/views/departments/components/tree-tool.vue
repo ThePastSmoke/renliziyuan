@@ -40,7 +40,6 @@ export default {
         this.$emit('changeIsShowAddDept', this.treeData)
       } else if (type === 'edit') {
         this.$emit('changeIsShowEditDept', this.treeData)
-        console.log('编辑逻辑')
       } else {
         // 删除成功后提醒用户，并通知父组件重新获取列表数据
         await this.$confirm('确认删除吗？')

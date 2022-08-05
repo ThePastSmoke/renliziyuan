@@ -74,7 +74,13 @@ export const constantRoutes = [
       name: 'Dashboard',
       component: () => import('@/views/dashboard/index'),
       meta: { title: '首页', icon: 'dashboard' }
-    }]
+    },
+    {
+      path: 'uploadExcel',
+      component: () => import('@/views/imports'),
+      hidden: true // 隐藏在左侧菜单中
+    }
+    ]
   },
 
   // 404 page must be placed at the end !!!
