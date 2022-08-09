@@ -10,10 +10,13 @@ Object.keys(filter).forEach(item => {
   Vue.filter(item, filter[item])
 })
 Vue.use(components)
+
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import locale from 'element-ui/lib/locale/lang/en' // lang i18n
+import Print from 'vue-print-nb'
 
+Vue.use(Print)
 import '@/styles/index.scss' // global css
 
 import App from './App'

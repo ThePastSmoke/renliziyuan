@@ -16,7 +16,12 @@ router.beforeEach(async(to, from, next) => {
   if (token) {
     // 当token存在 并且用户个人信息id为空的时候去请求用户的个人信息
     if (!store.getters.userId) {
-      await store.dispatch('user/getUserInfo')
+      const res = await store.dispatch('user/getUserInfo')
+      // 拿到用户获取的信息传递给filterRoutes经行筛选
+      const resRoutes = await store.dispatch('permission/filterRoutes', res.roles.menus)
+      router.addRoutes([...resRoutes, { path: '*', redirect: '/404', hidden: true }
+      ])
+      next(to.path)
     }
     // 存在token并且要去的是login界面
     if (to.path === loginPath) {

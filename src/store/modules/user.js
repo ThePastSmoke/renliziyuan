@@ -1,6 +1,7 @@
 // 状态
 import { getToken, removeToken, setTime, setToken } from '@/utils/auth'
 import { getUserDetailById, getUserInfo, login } from '@/api/user'
+import { resetRouter } from '@/router'
 
 const state = {
   token: getToken(),
@@ -40,11 +41,19 @@ const actions = {
     const res = await getUserInfo()
     const baseImg = await getUserDetailById(res.userId)
     context.commit('setUserInfo', { ...res, ...baseImg })
+    return {
+      ...res,
+      ...baseImg
+    }
   },
   // 退出用户
   logOut(context) {
     context.commit('removeToken')
     context.commit('removeUserInfo')
+    // 重置路由
+    resetRouter()
+    //  把vuex里的信息路由信息重置为空
+    context.commit('permission/setRouts', [], { root: true })
   }
 }
 export default {

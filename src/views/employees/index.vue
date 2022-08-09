@@ -19,6 +19,11 @@
         <el-table border :data="list">
           <el-table-column label="序号" sortable="" type="index" />
           <el-table-column label="姓名" sortable="" prop="username" />
+          <el-table-column v-slot="{row}" label="头像">
+            <template>
+              <el-avatar style="width: 100px; height: 100px" :src="row.staffPhoto" @click.native="showAvatar(row)" />
+            </template>
+          </el-table-column>
           <el-table-column label="工号" sortable="" prop="workNumber" />
           <el-table-column :formatter="formatter" label="聘用形式" sortable="" prop="formOfEmployment" />
           <el-table-column label="部门" sortable="" prop="departmentName" />
@@ -30,12 +35,13 @@
           <el-table-column label="账户状态" sortable="" prop="enableState" />
           <el-table-column label="操作" sortable="" fixed="right" width="280">
             <template v-slot="{row}">
-              <el-button type="text" size="small">查看</el-button>
+              <el-button type="text" size="small" @click="$router.push(`/employees/detail/${row.id}`)">查看</el-button>
               <el-button type="text" size="small">转正</el-button>
               <el-button type="text" size="small">调岗</el-button>
               <el-button type="text" size="small">离职</el-button>
-              <el-button type="text" size="small">角色</el-button>
-              <el-button type="text" size="small" @click="del(row.id)">删除</el-button>
+              <el-button type="text" size="small" @click="editRole(row.id)">角色</el-button>
+              <el-button :disabled="checkPermission('DELETE_USER')" type="text" size="small" @click="del(row.id)">删除
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -52,16 +58,28 @@
       </el-card>
     </div>
     <AddEmployee :show-dialog.sync="showDialog" />
+    <!--    二维码弹出层-->
+    <el-dialog title="二维码" :visible.sync="showCodeDialog">
+      <el-row type="flex" justify="center">
+        <canvas ref="myCanvas" />
+      </el-row>
+    </el-dialog>
+
+    <!--    编辑角色弹层-->
+    <AssignRole ref="assignRole" :show-role-dialog.sync="showRoleDialog" />
   </div>
 </template>
 
 <script>
 // import ToolBar from '@/components/toolBar'
-
 import { delEmployee, getEmployeeList } from '@/api/employees'
 import EmployeeEnum from '@/api/constant/employees'
 import AddEmployee from '@/views/employees/components/add-employee'
+import AssignRole from '@/views/employees/assign-role'
 import { formatDate } from '@/filters'
+import qrCode from 'qrcode'
+import { mixins } from '@/utils/mixin'
+
 // 表头对应关系
 const headers = {
   '手机号': 'mobile',
@@ -74,9 +92,12 @@ const headers = {
 }
 
 export default {
-  components: { AddEmployee },
+  components: { AddEmployee, AssignRole },
+  mixins: [mixins],
   data() {
     return {
+      showRoleDialog: false, // 编辑角色
+      showCodeDialog: false,
       showDialog: false, // 弹出层
       list: [], // 接数据的
       page: {
@@ -90,6 +111,17 @@ export default {
     this.getEmployeeList()
   },
   methods: {
+    async editRole(id) {
+      await this.$refs.assignRole.getUserDetailById(id)
+      this.showRoleDialog = true
+    },
+    showAvatar(row) {
+      this.showCodeDialog = true
+
+      this.$nextTick(() => {
+        qrCode.toCanvas(this.$refs.myCanvas, row.staffPhoto)
+      })
+    },
     // 该方法负责将数组转化成二维数组
     formatJson(headers, row) {
       // rows的结构 ->
